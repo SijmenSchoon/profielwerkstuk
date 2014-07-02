@@ -15,7 +15,7 @@ void usart_init(void)
 
 void usart_putchar(char c)
 {
-	while (UCSR0A & (1 << UDRE0));
+	while (!(UCSR0A & (1 << UDRE0)));
 	UDR0 = c;
 }
 
@@ -37,3 +37,43 @@ char usart_getchar()
 	return UDR0;
 }
 
+char *usart_gets(char *buf, int count)
+{
+	while (--count)
+	{
+		*buf = usart_getchar();
+		if (*buf == '\n')
+			break;
+		buf++;
+	}
+	*buf = '\0';
+	return buf;
+}
+
+char *usart_read(char *buf, int count)
+{
+	while (--count)
+		*buf++ = usart_getchar();
+	return buf;
+}
+
+void usart_put_command(command_t cmd)
+{
+	usart_putword(cmd.code);
+	usart_putword(cmd.length);
+	if (cmd.length > 0)
+		usart_write(cmd.data, cmd.length);
+}
+
+command_t usart_get_command()
+{
+	command_t cmd;
+	cmd.code = usart_getword();
+	cmd.length = usart_getword();
+	if (cmd.length > 0)
+	{
+		cmd.data = (char *)malloc(cmd.length);
+		usart_read(cmd.data, cmd.length);
+	}
+	return cmd;
+}

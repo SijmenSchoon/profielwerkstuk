@@ -23,16 +23,22 @@
 #define CRX_NOP		0
 #define CRX_PONG	1
 
+typedef struct
+{
+	uint16_t code;
+	uint16_t length;
+	char *data;
+} command_t;
+
 static int serial_fd;
 static fd_set read_fds, write_fds, except_fds;
 static struct timeval timeout;
 
-
 bool serial_open();
 void serial_close();
 
-void comm_send_command(uint16_t code, char *data, uint16_t length);
-int comm_read_command(uint16_t *code, char *data);
+void comm_put_command(command_t cmd);
+command_t comm_get_command();
 bool comm_ping();
 
 #endif

@@ -48,44 +48,47 @@ void serial_close()
 #endif
 }
 
-void comm_send_command(uint16_t code, char *data, uint16_t length)
+void comm_put_command(command_t cmd)
 {
-	write(serial_fd, &code, 2);
-	write(serial_fd, &length, 2);
-	if (length > 0)
-		write(serial_fd, data, length);
+	write(serial_fd, &cmd.code, 2);
+	write(serial_fd, &cmd.length, 2);
+	if (cmd.length > 0)
+		write(serial_fd, cmd.data, cmd.length);
 }
 
-int comm_read_command(uint16_t *code, char *data)
+command_t comm_get_command()
 {
+	command_t cmd;
+
 	if (!select(serial_fd + 1, &read_fds, &write_fds, &except_fds, &timeout))
 	{
-		*code = 0;
-		return 0;
+		cmd.code = 0;
+		cmd.length = 0;
+		return cmd;
 	}
 
-	uint16_t length;
-	assert(read(serial_fd, code, 2));
-	assert(read(serial_fd, &length, 2));
-	if (length > 0)
+	assert(read(serial_fd, &cmd.code, 2) == 2);
+	assert(read(serial_fd, &cmd.length, 2) == 2);
+	if (cmd.length > 0)
 	{
-		data = (char *)malloc(length);
-		read(serial_fd, data, length);
+		cmd.data = (char *)malloc(cmd.length);
+		read(serial_fd, cmd.data, cmd.length);
 	}
-	return length;
+	return cmd;
 }
 
 bool comm_ping()
 {
-	uint16_t code = 0, size;
-	char *data;
+	command_t cmd;
 
 	// Verzend een ping-commando
-	comm_send_command(CTX_PING, NULL, 0);
+	cmd.code = CTX_PING;
+	cmd.length = 0;
+	comm_put_command(cmd);
 
 	// Wacht op antwoord
-	size = comm_read_command(&code, data);
+	cmd = comm_get_command();
 
 	// Return true als het antwoord CRX_PONG is
-	return code == CRX_PONG;
+	return cmd.code == CRX_PONG;
 }

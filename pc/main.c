@@ -4,10 +4,12 @@
 
 int main(int argc, char **argv)
 {
+	// Open de seriele verbinding
 	if (!serial_open())
-	{
 		exit(EXIT_FAILURE);
-	}
+
+	// Wacht even tot de Arduino gereset is
+	sleep(3);
 
 	if (!comm_ping())
 	{
